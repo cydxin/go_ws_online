@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket 管理页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        #messages {
+            border: 1px solid #ddd;
+            width: 75%;
+            height: 800px;
+            margin: 0 auto;
+            overflow-y: auto;
+        }
+
+        #inputMessage {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="messages"></div>
+<input type="text" id="inputMessage" placeholder="输入消息">
+<button onclick="sendMessage()">发送</button>
+
+<script>
+    var ws = new WebSocket("ws://localhost:8989/ws");
+    var messagesDiv = document.getElementById('messages');
+    var inputMessage = document.getElementById('inputMessage');
+
+    ws.onopen = function () {
+        console.log("连接已建立！");
+    };
+
+    ws.onmessage = function (event) {
+        // 显示收到的消息
+        var message = event.data;
+        var messageElement = document.createElement('div');
+        messageElement.textContent = "服务器: " + message;
+        messagesDiv.appendChild(messageElement);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    };
+
+    ws.onerror = function (error) {
+        console.error("WebSocket 错误: ", error);
+    };
+
+    ws.onclose = function () {
+        console.log("连接已关闭");
+    };
+
+    function sendMessage() {
+        const message = inputMessage.value;
+        if (message) {
+            // 发送消息到 WebSocket 服务器
+            console.log(`["message","${message}"]`)
+            ws.send(`["message","${message}"]`);
+
+            // 显示发送的消息
+            var messageElement = document.createElement('div');
+            messageElement.textContent = "你: " + message;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // 清空输入框
+            inputMessage.value = '';
+        }
+    }
+    // 定时器每三秒发送一次[‘ping’]
+    setInterval(function () {
+        ws.send(`["ping"]`);
+    }, 3000);
+</script>
+</body>
+</html>
